@@ -17,12 +17,6 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
-
-void MainAssistent()
-{
-
-}
-
 typedef struct _Tl2info
 {
 	int pid;
@@ -34,6 +28,33 @@ typedef struct tagENUMINFO {
 	DWORD   dwProcess;
 	HWND    hwnd;
 } ENUMINFO, *PENUMINFO;
+void StartMacros(L2INFO l2inf)
+{
+	DWORD dwStartTime = GetTickCount();
+	DWORD dwDelta1=0;
+	DWORD dwDelta2 =0;
+	DWORD dwCurTime=0;
+	while (true)
+	{
+		dwCurTime = GetTickCount();
+		dwDelta1 = GetTickCount() - dwCurTime;
+		if(dwDelta1 >= 200)
+		{
+			dwCurTime =0;
+		}
+	}
+}
+void SendTextToEdit(HWND hwnd,WCHAR*buf)
+{
+	if(hwnd !=NULL)
+	{
+		SendMessage(hwnd, EM_SETSEL, GetWindowTextLength(hwnd), GetWindowTextLength(hwnd));
+		SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM)buf);
+		SendMessage(hwnd, EM_SCROLLCARET, 0, 0);
+	}
+}
+
+
 static BOOL CALLBACK EnumProc(	IN HWND hWnd,	IN LPARAM lParam	)
 {
 	DWORD dwProcessId;
@@ -169,8 +190,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PROCESSENTRY32 peEntry;
 	
 	TCHAR tchBuffer[1024];
-	HWND hResListBox;
-	HWND hLogTextBox;
+	HWND hResListBox=NULL;
+	HWND hLogTextBox=NULL;
 	int iCounter1 = 0;
 	WCHAR szBuffer[1024];
 	switch (message)
@@ -196,10 +217,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 			PostMessage(l2info[0].hwnd, WM_KEYDOWN, VK_F1, 0);
 			
-			SendMessage(hLogTextBox, EM_SETSEL, GetWindowTextLength(hLogTextBox), GetWindowTextLength(hLogTextBox));
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
-			SendMessage(hLogTextBox, EM_REPLACESEL, FALSE, (LPARAM)szBuffer);
-			SendMessage(hLogTextBox, EM_SCROLLCARET, 0, 0);
+			SendTextToEdit(hLogTextBox,szBuffer);
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
