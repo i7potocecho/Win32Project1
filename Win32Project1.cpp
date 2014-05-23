@@ -22,7 +22,7 @@ typedef struct _Tl2info
 	int pid;
 	HWND hwnd;
 	WCHAR szWindName[MAX_LOADSTRING];
-}L2INFO;
+}L2INFO,*PL2INFO;
 L2INFO l2info[1000];
 typedef struct tagENUMINFO {
 	DWORD   dwProcess;
