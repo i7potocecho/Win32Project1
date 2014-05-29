@@ -46,6 +46,18 @@ void StartMacros(L2INFO l2inf)
 		}
 	}
 }
+void MainAssist()
+{
+
+}
+void Heal()
+{
+
+}
+void Baff()
+{
+
+}
 void SendTextToEdit(HWND hwnd,WCHAR*buf)
 {
 	if(hwnd !=NULL)
