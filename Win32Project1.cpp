@@ -17,41 +17,58 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
+typedef struct _Tl2Command
+{
+	UINT uiCommId;
+	WCHAR szCommType;
+	DWORD dwTimer;
+	WCHAR wcParam;
+	void (*pCommand)(va_list &args);
+}L2COMM,*PL2COMM;
+typedef list<L2COMM> lCommand;
+
+
 typedef struct _Tl2info
 {
 	int pid;
 	HWND hwnd;
 	WCHAR szWindName[MAX_LOADSTRING];
-	void *ListCommand;
+	lCommand lComm;
 }L2INFO,*PL2INFO;
-
 L2INFO l2info[1000];
 typedef struct tagENUMINFO {
 	DWORD   dwProcess;
 	HWND    hwnd;
 } ENUMINFO, *PENUMINFO;
+//запуск в потоке 
 void StartMacros(L2INFO l2inf)
 {
-	DWORD dwStartTime = GetTickCount();
-	DWORD dwDelta1=0;
-	DWORD dwDelta2 =0;
-	DWORD dwCurTime=0;
+	DWORD dwStartTime1 = GetTickCount();
+	DWORD dwCurTime1=0;
+
 	while (true)
 	{
-		dwCurTime = GetTickCount();
-		dwDelta1 = GetTickCount() - dwCurTime;
-		if(dwDelta1 >= 200)
+		dwCurTime1 = GetTickCount();
+		if((dwCurTime1-dwStartTime1) >= 200)
 		{
-			dwCurTime =0;
+			dwStartTime1 = GetTickCount();
+			//выполнить команду
 		}
+
+		//нужно улсовие выхода из потока
 	}
 }
-void MainAssist()
+void CommPress(va_list &args)
 {
-
+	//type id 1
+	HWND handle = va_arg(args,HWND);
+	DWORD VK_KEY = va_arg(args,DWORD);
+	PostMessage(handle, WM_KEYDOWN, VK_KEY, 0);
 }
-void Heal()
+void CommCheck(va_list &args)
 {
+	//type id 2
+	//проверить значение если тру то выполнить команду	
 
 }
 void Baff()
