@@ -18,6 +18,7 @@
 #include <memory.h>
 #include <tchar.h>
 #include <list>
+#include <vector>
 
 using namespace std;
 

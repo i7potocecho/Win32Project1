@@ -33,7 +33,7 @@ typedef struct _Tl2info
 	int pid;
 	HWND hwnd;
 	WCHAR szWindName[MAX_LOADSTRING];
-	lCommand lComm;
+	lCommand *lComm;
 }L2INFO,*PL2INFO;
 L2INFO l2info[1000];
 typedef struct tagENUMINFO {
@@ -43,18 +43,28 @@ typedef struct tagENUMINFO {
 //запуск в потоке 
 void StartMacros(L2INFO l2inf)
 {
-	DWORD dwStartTime1 = GetTickCount();
-	DWORD dwCurTime1=0;
-
+	vector<DWORD>starttimer;
+	vector<DWORD>curtimer;
+	//Инициализация таймеров
+	if(l2inf.lComm = nullptr)return;
+	int counterl2com = 0;
+	for(list<L2COMM>::iterator iter = l2inf.lComm->begin();iter != l2inf.lComm->end();++iter)
+	{
+		starttimer.push_back(GetTickCount());
+		curtimer.push_back(GetTickCount());
+		counterl2com++;
+	}
 	while (true)
 	{
-		dwCurTime1 = GetTickCount();
-		if((dwCurTime1-dwStartTime1) >= 200)
+		for(int i = 0;i<counterl2com;i++)
 		{
-			dwStartTime1 = GetTickCount();
-			//выполнить команду
+			curtimer[i] = GetTickCount();
+			if((curtimer[i] - starttimer[i]) >= l2inf.lComm->)
+			{
+				starttimer[i] = GetTickCount();
+				//выполнить команду
+			}
 		}
-
 		//нужно улсовие выхода из потока
 	}
 }
@@ -84,8 +94,6 @@ void SendTextToEdit(HWND hwnd,WCHAR*buf)
 		SendMessage(hwnd, EM_SCROLLCARET, 0, 0);
 	}
 }
-
-
 static BOOL CALLBACK EnumProc(	IN HWND hWnd,	IN LPARAM lParam	)
 {
 	DWORD dwProcessId;
@@ -249,15 +257,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для начала будем отсылать нажаите кнопки
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
+			l2info[0].lComm = new (lCommand);
 			tempcom.dwTimer = 200;
 			tempcom.pCommand = CommPress;
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 1;
 			strTemp1 = _T("Parametr");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
-			SendTextToEdit(hLogTextBox, tempcom.wcParam);
+			l2info[0].lComm->push_back(tempcom);
+			tempcom.dwTimer = 300;
+			tempcom.pCommand = CommPress;
+			tempcom.szCommType = 1;
+			tempcom.uiCommId = 2;
+			strTemp1 = _T("param2");
+			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*6);
+			l2info[0].lComm->push_back(tempcom);
+			
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
 			SendTextToEdit(hLogTextBox,szBuffer);
+			for(list<L2COMM>::iterator iter = tempcomm.begin();iter != tempcomm.end();++iter)
+			{
+				SendTextToEdit(hLogTextBox,(iter->wcParam));
+			}
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
@@ -284,6 +305,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_EXIT:
+			for(int i =0;i<1000;i++)
+			{
+				if(l2info[i].lComm != nullptr)delete l2info[i].lComm;
+			}
 			DestroyWindow(hWnd);
 			break;
 		default:
