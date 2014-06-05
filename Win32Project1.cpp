@@ -22,8 +22,8 @@ typedef struct _Tl2Command
 	UINT uiCommId;
 	WCHAR szCommType;
 	DWORD dwTimer;
-	WCHAR wcParam;
-	void (*pCommand)(va_list &args);
+	WCHAR wcParam[MAX_LOADSTRING];
+	void (*pCommand)(int id,...);
 }L2COMM,*PL2COMM;
 typedef list<L2COMM> lCommand;
 
@@ -58,20 +58,20 @@ void StartMacros(L2INFO l2inf)
 		//нужно улсовие выхода из потока
 	}
 }
-void CommPress(va_list &args)
+void CommPress(int startindex,...)
 {
 	//type id 1
-	HWND handle = va_arg(args,HWND);
-	DWORD VK_KEY = va_arg(args,DWORD);
+	HWND handle = va_arg(startindex,HWND);
+	DWORD VK_KEY = va_arg(startindex,DWORD);
 	PostMessage(handle, WM_KEYDOWN, VK_KEY, 0);
 }
-void CommCheck(va_list &args)
+void CommCheck(int startindex,...)
 {
 	//type id 2
 	//проверить значение если тру то выполнить команду	
 
 }
-void Baff()
+void CheckRectOnScreen(int startindex,...)
 {
 
 }
@@ -225,6 +225,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HWND hLogTextBox=NULL;
 	int iCounter1 = 0;
 	WCHAR szBuffer[1024];
+	lCommand tempcomm;
+	L2COMM tempcom;
+	TCHAR *strTemp1;
+	
 	switch (message)
 	{
 	case WM_CREATE:
@@ -245,9 +249,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для начала будем отсылать нажаите кнопки
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
-			
-			PostMessage(l2info[0].hwnd, WM_KEYDOWN, VK_F1, 0);
-			
+			tempcom.dwTimer = 200;
+			tempcom.pCommand = CommPress;
+			tempcom.szCommType = 1;
+			tempcom.uiCommId = 1;
+			strTemp1 = _T("Parametr");
+			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
+			SendTextToEdit(hLogTextBox, tempcom.wcParam);
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
 			SendTextToEdit(hLogTextBox,szBuffer);
 			break;
