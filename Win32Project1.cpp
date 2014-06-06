@@ -73,10 +73,11 @@ void StartMacros(L2INFO *pl2inf)
 			{
 				starttimer[i] = GetTickCount();
 				//выполнить команду
+				tempcomm1.pCommand(0, l2inf.hwnd, tempcomm1.wcParam);
 				SendTextToEdit(hLogTextBox,tempcomm1.wcParam);
 			}
 		}
-		//нужно улсовие выхода из потока
+		
 		if(GetAsyncKeyState(VK_ESCAPE)&0x8000)break;
 		
 		
@@ -134,7 +135,6 @@ HWND GetProcessWindow(IN DWORD dwProcessId)
 
 	return info.hwnd;
 }
-
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,_In_opt_ HINSTANCE hPrevInstance,_In_ LPTSTR    lpCmdLine,_In_ int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
