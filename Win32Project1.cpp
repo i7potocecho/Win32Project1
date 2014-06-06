@@ -11,6 +11,9 @@ HINSTANCE hInst;								// текущий экземпляр
 TCHAR szTitle[MAX_LOADSTRING];					// Текст строки заголовка
 TCHAR szWindowClass[MAX_LOADSTRING];			// имя класса главного окна
 
+bool bVK_KEYS[256];
+BYTE bKeys[256];
+
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -25,7 +28,9 @@ typedef struct _Tl2Command
 	WCHAR wcParam[MAX_LOADSTRING];
 	void (*pCommand)(int id,...);
 }L2COMM,*PL2COMM;
-typedef list<L2COMM> lCommand;
+typedef vector<L2COMM> lCommand;
+lCommand tempcomm[100];
+L2COMM tempcom;
 
 
 typedef struct _Tl2info
@@ -35,38 +40,48 @@ typedef struct _Tl2info
 	WCHAR szWindName[MAX_LOADSTRING];
 	lCommand *lComm;
 }L2INFO,*PL2INFO;
-L2INFO l2info[1000];
+L2INFO l2info[100];
 typedef struct tagENUMINFO {
 	DWORD   dwProcess;
 	HWND    hwnd;
 } ENUMINFO, *PENUMINFO;
 //запуск в потоке 
-void StartMacros(L2INFO l2inf)
+void StartMacros(L2INFO *pl2inf)
 {
+	L2INFO l2inf = *pl2inf;
 	vector<DWORD>starttimer;
 	vector<DWORD>curtimer;
 	//Инициализация таймеров
-	if(l2inf.lComm = nullptr)return;
+	
 	int counterl2com = 0;
-	for(list<L2COMM>::iterator iter = l2inf.lComm->begin();iter != l2inf.lComm->end();++iter)
+	for(vector<L2COMM>::iterator iter = l2inf.lComm->begin();iter != l2inf.lComm->end();++iter)
 	{
 		starttimer.push_back(GetTickCount());
 		curtimer.push_back(GetTickCount());
 		counterl2com++;
 	}
+	L2COMM tempcomm1 ;
+	
 	while (true)
 	{
 		for(int i = 0;i<counterl2com;i++)
 		{
 			curtimer[i] = GetTickCount();
-			if((curtimer[i] - starttimer[i]) >= l2inf.lComm->)
+			
+			tempcomm1 = (*l2inf.lComm)[i];
+			if((curtimer[i] - starttimer[i]) >= tempcomm1.dwTimer)
 			{
 				starttimer[i] = GetTickCount();
 				//выполнить команду
+				SendTextToEdit(hLogTextBox,tempcomm1.wcParam);
 			}
 		}
 		//нужно улсовие выхода из потока
+		if(GetAsyncKeyState(VK_ESCAPE)&0x8000)break;
+		
+		
 	}
+	_endthreadex(0);
 }
 void CommPress(int startindex,...)
 {
@@ -230,11 +245,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
 	TCHAR tchBuffer[1024];
 	HWND hResListBox=NULL;
-	HWND hLogTextBox=NULL;
+	
 	int iCounter1 = 0;
 	WCHAR szBuffer[1024];
-	lCommand tempcomm;
-	L2COMM tempcom;
+	
+	
 	TCHAR *strTemp1;
 	
 	switch (message)
@@ -257,28 +272,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для начала будем отсылать нажаите кнопки
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
-			l2info[0].lComm = new (lCommand);
+			
 			tempcom.dwTimer = 200;
 			tempcom.pCommand = CommPress;
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 1;
-			strTemp1 = _T("Parametr");
+			strTemp1 = _T("\nParametr");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
-			l2info[0].lComm->push_back(tempcom);
+			tempcomm[0].push_back(tempcom);
 			tempcom.dwTimer = 300;
 			tempcom.pCommand = CommPress;
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 2;
-			strTemp1 = _T("param2");
+			strTemp1 = _T("\nparam2");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*6);
-			l2info[0].lComm->push_back(tempcom);
-			
+			tempcomm[0].push_back(tempcom);
+			l2info[0].lComm = &tempcomm[0];
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
 			SendTextToEdit(hLogTextBox,szBuffer);
-			for(list<L2COMM>::iterator iter = tempcomm.begin();iter != tempcomm.end();++iter)
-			{
-				SendTextToEdit(hLogTextBox,(iter->wcParam));
-			}
+			//CreateThread(NULL,0,&StartMacros,0,0,NULL);
+			_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
@@ -305,15 +318,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_EXIT:
-			for(int i =0;i<1000;i++)
-			{
-				if(l2info[i].lComm != nullptr)delete l2info[i].lComm;
-			}
+			
 			DestroyWindow(hWnd);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
+		break;
+	case WM_KEYDOWN:
+		bVK_KEYS[(BYTE)wParam] = true;
+		break;
+	case WM_KEYUP:
+		bVK_KEYS[(BYTE)wParam] = false;
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);

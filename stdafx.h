@@ -11,6 +11,7 @@
 // Файлы заголовков Windows:
 #include <windows.h>
 #include <TlHelp32.h>
+#include <process.h>
 
 // Файлы заголовков C RunTime
 #include <stdlib.h>
@@ -19,6 +20,7 @@
 #include <tchar.h>
 #include <list>
 #include <vector>
+#include <thread>
 
 using namespace std;
 
