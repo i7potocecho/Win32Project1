@@ -4,3 +4,8 @@
 
 void SendTextToEdit(HWND ,WCHAR*);
 HWND hLogTextBox=NULL;
+HWND hMyProg;
+HDC hdcPaintArea = NULL;
+RECT rectMyClient;
+RECT rectTargetBox;
+BOOL CALLBACK LookChildWindow(HWND, LPARAM);

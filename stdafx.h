@@ -15,6 +15,7 @@
 
 // Файлы заголовков C RunTime
 #include <stdlib.h>
+#include <stdarg.h>
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>

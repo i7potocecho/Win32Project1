@@ -27,6 +27,7 @@ typedef struct _Tl2Command
 	DWORD dwTimer;
 	WCHAR wcParam[MAX_LOADSTRING];
 	void (*pCommand)(int id,...);
+	vector<BYTE>vbKeys;
 }L2COMM,*PL2COMM;
 typedef vector<L2COMM> lCommand;
 lCommand tempcomm[100];
@@ -73,7 +74,7 @@ void StartMacros(L2INFO *pl2inf)
 			{
 				starttimer[i] = GetTickCount();
 				//выполнить команду
-				tempcomm1.pCommand(0, l2inf.hwnd, tempcomm1.wcParam);
+				tempcomm1.pCommand(0, &l2inf, &tempcomm1);
 				SendTextToEdit(hLogTextBox,tempcomm1.wcParam);
 			}
 		}
@@ -87,9 +88,53 @@ void StartMacros(L2INFO *pl2inf)
 void CommPress(int startindex,...)
 {
 	//type id 1
-	HWND handle = va_arg(startindex,HWND);
-	DWORD VK_KEY = va_arg(startindex,DWORD);
-	PostMessage(handle, WM_KEYDOWN, VK_KEY, 0);
+	va_list marker;
+	va_start(marker, startindex);
+	L2INFO *pl2info = va_arg(marker, L2INFO*);
+	L2COMM* pl2comm = va_arg(marker, L2COMM*);
+	va_end(marker);
+	PostMessage(pl2info->hwnd, WM_KEYDOWN,pl2comm->vbKeys[0] , 0);
+}
+void IsTarget(int startindex, ...)
+{
+	va_list marker;
+	va_start(marker, startindex);
+	L2INFO *pl2info = va_arg(marker, L2INFO*);
+	L2COMM* pl2comm = va_arg(marker, L2COMM*);
+	va_end(marker);
+
+}
+void NotTarget(int startindex, ...)
+{
+	va_list marker;
+	va_start(marker, startindex);
+	L2INFO *pl2info = va_arg(marker, L2INFO*);
+	L2COMM* pl2comm = va_arg(marker, L2COMM*);
+	va_end(marker);
+	
+		
+	HDC hdcmain = GetDC(pl2info->hwnd);
+	hdcPaintArea = CreateCompatibleDC(hdcmain);
+	BITMAPINFOHEADER bmpInfoHeader;
+	BITMAPINFO bmpInfo;	
+	UINT bitmap_dx = 175;
+	UINT bitmap_dy = 50;
+	bmpInfoHeader.biSize = sizeof(bmpInfoHeader);
+	bmpInfoHeader.biWidth = bitmap_dx;
+	bmpInfoHeader.biHeight = bitmap_dy;
+	bmpInfoHeader.biPlanes = 1;
+	bmpInfoHeader.biBitCount = 24;
+	bmpInfoHeader.biCompression = BI_RGB;
+	bmpInfoHeader.biSizeImage = bitmap_dx*bitmap_dy*(24 / 8);
+	bmpInfoHeader.biXPelsPerMeter = 0;
+	bmpInfoHeader.biYPelsPerMeter = 0;
+	bmpInfoHeader.biClrUsed = 0;
+	bmpInfoHeader.biClrImportant = 0;
+	BYTE*memory;
+	//HBITMAP hBitmap = CreateDIBSection(hdcPaintArea, &bmpInfo, DIB_RGB_COLORS, (void**)&memory, NULL, 0);
+	//SelectObject(hdcPaintArea, hBitmap);
+	StretchBlt(hdcPaintArea, 0, 0, bitmap_dx, bitmap_dy, hdcmain, 0, 0, bitmap_dx, bitmap_dy, SRCCOPY);
+	ReleaseDC(pl2info->hwnd, hdcmain);
 }
 void CommCheck(int startindex,...)
 {
@@ -100,6 +145,13 @@ void CommCheck(int startindex,...)
 void CheckRectOnScreen(int startindex,...)
 {
 
+}
+BOOL CALLBACK LookChildWindow(HWND hwnd, LPARAM lparam)
+{
+	WCHAR  pwcTextBuffer[256];
+	GetWindowText(hwnd, pwcTextBuffer, sizeof(pwcTextBuffer));
+	SendTextToEdit(hLogTextBox, pwcTextBuffer);
+	return TRUE;
 }
 void SendTextToEdit(HWND hwnd,WCHAR*buf)
 {
@@ -213,7 +265,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
    //Добавляем элементы управления textbox, listbox, buttons
-
+   hMyProg = hWnd;
 
    if (!hWnd)
    {
@@ -279,6 +331,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			tempcom.uiCommId = 1;
 			strTemp1 = _T("\nParametr");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
+			tempcom.vbKeys.push_back(VK_F1);
 			tempcomm[0].push_back(tempcom);
 			tempcom.dwTimer = 300;
 			tempcom.pCommand = CommPress;
@@ -286,12 +339,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			tempcom.uiCommId = 2;
 			strTemp1 = _T("\nparam2");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*6);
+			tempcom.vbKeys.push_back(VK_OEM_5);
 			tempcomm[0].push_back(tempcom);
 			l2info[0].lComm = &tempcomm[0];
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
 			SendTextToEdit(hLogTextBox,szBuffer);
+			NotTarget(0, &l2info[0], &l2info[0].lComm[0]);
+
 			//CreateThread(NULL,0,&StartMacros,0,0,NULL);
-			_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
+			//_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
@@ -305,7 +361,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			do
 			{
 				
-				if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
+				if (!wcscmp(_T("calc.exe"), peEntry.szExeFile))
 				{
 					l2info[iCounter1].pid = peEntry.th32ProcessID;
 					memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
@@ -332,8 +388,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		bVK_KEYS[(BYTE)wParam] = false;
 		break;
 	case WM_PAINT:
+		GetClientRect(hMyProg, &rectMyClient);
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
+		if (hdcPaintArea !=NULL)
+			StretchBlt(hdc, rectMyClient.left+10, rectMyClient.bottom-10-50, 175, 50, hdcPaintArea, 0, 0, 175, 50, SRCCOPY);
+		MoveToEx(hdc, rectMyClient.left + 10, rectMyClient.bottom - 10 - 50, NULL);
+		LineTo(hdc, rectMyClient.left + 10 + 175, rectMyClient.bottom - 10 - 50);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
