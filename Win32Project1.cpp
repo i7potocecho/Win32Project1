@@ -114,20 +114,7 @@ void NotTarget(int startindex, ...)
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
 	
-	//HDC	hdcScreen = CreateDC(L"DISPLAY", NULL, NULL, NULL);
-	HDC hdcmain = GetWindowDC(pl2info->hwnd);
-	hdcPaintArea = CreateCompatibleDC(hdcmain);
-	RECT tectWind;
-	GetClientRect(pl2info->hwnd, &tectWind);
-	UINT bitmap_dx = 175;
-	UINT bitmap_dy = 50;
-	HBITMAP hBitmap;
-	hBitmap = CreateCompatibleBitmap(hdcmain,tectWind.right-tectWind.left,tectWind.bottom-tectWind.top);
-	SelectObject(hdcPaintArea, hBitmap);
-	PrintWindow(pl2info->hwnd, hdcPaintArea, 0);
-	StretchBlt(hdcPaintArea, 0, 0, 175, 50, hdcmain, 0, 0, 175, 50, SRCCOPY);
-	//DeleteObject(hBitmap);
-	ReleaseDC(pl2info->hwnd, hdcmain);
+	
 }
 void CommCheck(int startindex,...)
 {
@@ -283,7 +270,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	PAINTSTRUCT ps;
+	
 	HDC hdc;
 	HANDLE hSnapShot;
 	PROCESSENTRY32 peEntry;
@@ -355,7 +342,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			do
 			{
 				
-				if (!wcscmp(_T("la2.exe"), peEntry.szExeFile))
+				if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
 				{
 					l2info[iCounter1].pid = peEntry.th32ProcessID;
 					memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
@@ -382,13 +369,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		bVK_KEYS[(BYTE)wParam] = false;
 		break;
 	case WM_PAINT:
-		GetClientRect(hMyProg, &rectMyClient);
+		
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
-		if (hdcPaintArea !=NULL)
-			StretchBlt(hdc, rectMyClient.left+10, rectMyClient.bottom-10-50, 175, 50, hdcPaintArea, 0, 0, 175, 50, SRCCOPY);
-		MoveToEx(hdc, rectMyClient.left + 10, rectMyClient.bottom - 10 - 50, NULL);
-		LineTo(hdc, rectMyClient.left + 10 + 175, rectMyClient.bottom - 10 - 50);
+				
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
