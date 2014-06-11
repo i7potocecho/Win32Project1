@@ -128,10 +128,6 @@ void NotTarget(int startindex, ...)
 	StretchBlt(hdcPaintArea, 0, 0, 175, 50, hdcmain, 0, 0, 175, 50, SRCCOPY);
 	//DeleteObject(hBitmap);
 	ReleaseDC(pl2info->hwnd, hdcmain);
-<<<<<<< HEAD
-=======
-	
->>>>>>> origin/master
 }
 void CommCheck(int startindex,...)
 {
@@ -359,7 +355,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			do
 			{
 				
-				if (!wcscmp(_T("calc.exe"), peEntry.szExeFile))
+				if (!wcscmp(_T("la2.exe"), peEntry.szExeFile))
 				{
 					l2info[iCounter1].pid = peEntry.th32ProcessID;
 					memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
