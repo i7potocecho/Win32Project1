@@ -75,38 +75,21 @@ void StartMacros(L2INFO *pl2inf)
 			{
 				starttimer[i] = GetTickCount();
 				//выполнить команду
-<<<<<<< HEAD
-
-				if(tempcomm1.uiCommId == 1)
-					tempcomm1.pCommand(0, l2inf,&tempcomm1);
-				else if(tempcomm1.uiCommId == 2);
-
 				tempcomm1.pCommand(0, &l2inf, &tempcomm1);
-
-=======
-				tempcomm1.pCommand(0, &l2inf, &tempcomm1);
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 				SendTextToEdit(hLogTextBox,tempcomm1.wcParam);
 			}
 		}
 		
 		if(GetAsyncKeyState(VK_ESCAPE)&0x8000)break;
-		
-		
 	}
 	_endthreadex(0);
 }
 void CommPress(int startindex,...)
 {
 	//type id 1
-<<<<<<< HEAD
-
 	L2INFO l2handle = va_arg(startindex,L2INFO);
 	L2COMM l2com = va_arg(startindex,L2COMM);
 	PostMessage(l2handle.hwnd, WM_KEYDOWN, l2com.dwKeyPressed, 0);
-
-=======
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 	va_list marker;
 	va_start(marker, startindex);
 	L2INFO *pl2info = va_arg(marker, L2INFO*);
@@ -154,10 +137,6 @@ void NotTarget(int startindex, ...)
 	//SelectObject(hdcPaintArea, hBitmap);
 	StretchBlt(hdcPaintArea, 0, 0, bitmap_dx, bitmap_dy, hdcmain, 0, 0, bitmap_dx, bitmap_dy, SRCCOPY);
 	ReleaseDC(pl2info->hwnd, hdcmain);
-<<<<<<< HEAD
-
-=======
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 }
 void CommCheck(int startindex,...)
 {
@@ -351,15 +330,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			tempcom.uiCommId = 1;
 			strTemp1 = _T("\nParametr");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
-<<<<<<< HEAD
-
 			tempcom.dwKeyPressed = VK_F1;
-
 			tempcom.vbKeys.push_back(VK_F1);
-
-=======
-			tempcom.vbKeys.push_back(VK_F1);
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 			tempcomm[0].push_back(tempcom);
 			tempcom.dwTimer = 3000;
 			tempcom.pCommand = CommPress;
@@ -367,31 +339,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			tempcom.uiCommId = 2;
 			strTemp1 = _T("\nparam2");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*6);
-<<<<<<< HEAD
-
 			tempcom.dwKeyPressed = VK_F2;
-
 			tempcom.vbKeys.push_back(VK_OEM_5);
-
-=======
-			tempcom.vbKeys.push_back(VK_OEM_5);
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 			tempcomm[0].push_back(tempcom);
 			l2info[0].lComm = &tempcomm[0];
 			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
 			SendTextToEdit(hLogTextBox,szBuffer);
-<<<<<<< HEAD
-
-
 			//проверка функций
-
 			NotTarget(0, &l2info[0], &l2info[0].lComm[0]);
-
-
-=======
-			NotTarget(0, &l2info[0], &l2info[0].lComm[0]);
-
->>>>>>> b8ccc9cb7b1f3067269f4b08dce60e785b2dc7bb
 			//CreateThread(NULL,0,&StartMacros,0,0,NULL);
 			//_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
 			break;
