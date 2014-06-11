@@ -114,29 +114,24 @@ void NotTarget(int startindex, ...)
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
 	
-		
-	HDC hdcmain = GetDC(pl2info->hwnd);
+	//HDC	hdcScreen = CreateDC(L"DISPLAY", NULL, NULL, NULL);
+	HDC hdcmain = GetWindowDC(pl2info->hwnd);
 	hdcPaintArea = CreateCompatibleDC(hdcmain);
-	BITMAPINFOHEADER bmpInfoHeader;
-	BITMAPINFO bmpInfo;	
+	RECT tectWind;
+	GetClientRect(pl2info->hwnd, &tectWind);
 	UINT bitmap_dx = 175;
 	UINT bitmap_dy = 50;
-	bmpInfoHeader.biSize = sizeof(bmpInfoHeader);
-	bmpInfoHeader.biWidth = bitmap_dx;
-	bmpInfoHeader.biHeight = bitmap_dy;
-	bmpInfoHeader.biPlanes = 1;
-	bmpInfoHeader.biBitCount = 24;
-	bmpInfoHeader.biCompression = BI_RGB;
-	bmpInfoHeader.biSizeImage = bitmap_dx*bitmap_dy*(24 / 8);
-	bmpInfoHeader.biXPelsPerMeter = 0;
-	bmpInfoHeader.biYPelsPerMeter = 0;
-	bmpInfoHeader.biClrUsed = 0;
-	bmpInfoHeader.biClrImportant = 0;
-	BYTE*memory;
-	//HBITMAP hBitmap = CreateDIBSection(hdcPaintArea, &bmpInfo, DIB_RGB_COLORS, (void**)&memory, NULL, 0);
-	//SelectObject(hdcPaintArea, hBitmap);
-	StretchBlt(hdcPaintArea, 0, 0, bitmap_dx, bitmap_dy, hdcmain, 0, 0, bitmap_dx, bitmap_dy, SRCCOPY);
+	HBITMAP hBitmap;
+	hBitmap = CreateCompatibleBitmap(hdcmain,tectWind.right-tectWind.left,tectWind.bottom-tectWind.top);
+	SelectObject(hdcPaintArea, hBitmap);
+	PrintWindow(pl2info->hwnd, hdcPaintArea, 0);
+	StretchBlt(hdcPaintArea, 0, 0, 175, 50, hdcmain, 0, 0, 175, 50, SRCCOPY);
+	//DeleteObject(hBitmap);
 	ReleaseDC(pl2info->hwnd, hdcmain);
+<<<<<<< HEAD
+=======
+	
+>>>>>>> origin/master
 }
 void CommCheck(int startindex,...)
 {
