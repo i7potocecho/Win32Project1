@@ -368,8 +368,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYUP:
 		bVK_KEYS[(BYTE)wParam] = false;
 		break;
-	case WM_PAINT:
-		
+	case WM_PAINT:		
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
 				
