@@ -279,7 +279,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int iCounter1 = 0;
 	WCHAR szBuffer[1024];	
 	TCHAR *strTemp1;
-	
+	UINT bitmap_dx = 175;
+	UINT bitmap_dy = 50;
+	HBITMAP hBitmap;
+	HDC hdcmain;
+	RECT tectWind;
 	switch (message)
 	{
 	case WM_CREATE:
@@ -289,7 +293,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		CreateWindowExW(0, _T("listbox"), _T("Список процессов"), WS_CHILD | WS_VSCROLL | WS_VISIBLE|ES_AUTOVSCROLL|WS_BORDER, 201, 0, 200, 400, hWnd, (HMENU)IDLB_LISTBOCPROC, NULL, NULL);
 		CreateWindowExW(0, _T("edit"), _T("Лог"), WS_CHILD | WS_VSCROLL | WS_VISIBLE | ES_AUTOVSCROLL | WS_BORDER, 403, 0, 500, 400, hWnd, (HMENU)IDTB_LOGTEXTBOX, NULL, NULL);
 		CreateWindowExW(0, _T("static"), _T("label"), WS_CHILD |  WS_VISIBLE | WS_TABSTOP | WS_BORDER, 907, 0, 100, 100, hWnd, (HMENU)IDL_MOUSECOORDINFO, NULL, NULL);
+		GetClientRect(hWnd, &rectMyClient);
+		//------------------------------
+		hResListBox = GetDlgItem(hWnd, IDLB_LISTBOCPROC);
+		hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
+		hLabelInfo = GetDlgItem(hWnd, IDL_MOUSECOORDINFO);
+		//SetWindowTextW(hLabelInfo,_T("LABEL"));
+		SendMessage(hResListBox, LB_RESETCONTENT, 0, 0);
+		hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		peEntry.dwSize = sizeof(PROCESSENTRY32);
+		Process32First(hSnapShot, &peEntry);
 
+		do
+		{
+
+			if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
+			{
+				l2info[iCounter1].pid = peEntry.th32ProcessID;
+				memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
+				SendMessage(hResListBox, LB_ADDSTRING, 0, (LPARAM)(l2info[iCounter1].szWindName));
+				iCounter1++;
+			}
+		} while (Process32Next(hSnapShot, &peEntry));
+		//
+		l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
@@ -299,7 +326,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case IDB_SETSCRIPT:
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
-			//для начала будем отсылать нажаите кнопки
+			//для нач
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
 			
 			tempcom.dwTimer = 120000;
@@ -330,26 +357,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
-			hResListBox = GetDlgItem(hWnd, IDLB_LISTBOCPROC);
-			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
-			hLabelInfo = GetDlgItem(hWnd,IDL_MOUSECOORDINFO);
-			//SetWindowTextW(hLabelInfo,_T("LABEL"));
-			SendMessage(hResListBox, LB_RESETCONTENT, 0, 0);
-			hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-			peEntry.dwSize = sizeof(PROCESSENTRY32);
-			Process32First(hSnapShot, &peEntry);
-
-			do
-			{
-				
-				if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
-				{
-					l2info[iCounter1].pid = peEntry.th32ProcessID;
-					memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
-					SendMessage(hResListBox, LB_ADDSTRING, 0, (LPARAM)(l2info[iCounter1].szWindName));
-					iCounter1++;
-				}
-			} while (Process32Next(hSnapShot,&peEntry));
+			SendMessage(hWnd, WM_PAINT, 0, 0);
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -371,8 +379,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:		
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
-				
+		hdcmain = GetWindowDC(l2info[0].hwnd);
+		hdcPaintArea = CreateCompatibleDC(hdcmain);
+		//GetClientRect(l2info[0].hwnd, &tectWind);
+		hBitmap = CreateCompatibleBitmap(hdcPaintArea, GetDeviceCaps(hdcmain,HORZRES),GetDeviceCaps(hdcmain,VERTRES));
+		SelectObject(hdcPaintArea, hBitmap);
+		PrintWindow(l2info[0].hwnd, hdcPaintArea, PW_CLIENTONLY);
+		//StretchBlt(hdcPaintArea, 0, 0, 175, 50, hdcmain, 0, 0, 175, 50, SRCCOPY);
+		//StretchBlt(hdc, rectMyClient.left + 10, rectMyClient.bottom - 10 - 50, 175, 50, hdcPaintArea, 100, 100, 275, 150, SRCCOPY);
+		BitBlt(hdc, 100, 100 , rectMyClient.right,rectMyClient.bottom, hdcPaintArea, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
+		DeleteObject(hBitmap);
+		DeleteDC(hdcPaintArea);
+		ReleaseDC(l2info[0].hwnd, hdcmain);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
