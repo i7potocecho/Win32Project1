@@ -22,13 +22,14 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct _Tl2Command
 {
-	UINT uiCommId;
+	UINT uiCommId;//ID команнды
 	WCHAR szCommType;
-	DWORD dwTimer;
+	DWORD dwTimer;//значение таймера
 	DWORD dwKeyPressed;
 	WCHAR wcParam[MAX_LOADSTRING];
-	void (*pCommand)(int id,...);
-	vector<BYTE>vbKeys;
+	void (*pCommand)(int id,...);//указатель на функцию команды
+	vector<BYTE>vbKeys;//вектор кнопок
+	int iCounter1;
 }L2COMM,*PL2COMM;
 typedef vector<L2COMM> lCommand;
 lCommand tempcomm[100];
@@ -104,7 +105,20 @@ void IsTarget(int startindex, ...)
 	L2INFO *pl2info = va_arg(marker, L2INFO*);
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
-
+	HDC hdcpix = GetWindowDC(pl2info->hwnd);
+	//GetPixel(hdcpix, 626, 56);
+	int iMaxKeysValue = pl2comm->vbKeys.size();
+	int iCountKeysValue;
+	int iRValue = GetRValue(GetPixel(hdcpix, 626, 56));
+	ReleaseDC(pl2info->hwnd, hdcpix);
+	if (iRValue > 111)
+	{
+		//перебрать список таргетов
+		if (pl2comm->iCounter1 >= 0)
+		{
+			PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[0], 0);
+		}
+	}
 }
 void NotTarget(int startindex, ...)
 {
@@ -113,20 +127,52 @@ void NotTarget(int startindex, ...)
 	L2INFO *pl2info = va_arg(marker, L2INFO*);
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
-	
-	
-}
-void CommCheck(int startindex,...)
-{
-	//type id 2
-	//проверить значение если тру то выполнить команду	
-	L2INFO l2handle = va_arg(startindex,L2INFO);
-	L2COMM l2com = va_arg(startindex,L2COMM);
-}
-void CheckRectOnScreen(int startindex,...)
-{
+	HDC hdcpix = GetWindowDC(pl2info->hwnd);
+	//GetPixel(hdcpix, 626, 56);
+	int iMaxKeysValue = pl2comm->vbKeys.size();
+	int iCountKeysValue;
+	int iRValue = GetRValue(GetPixel(hdcpix, 626, 56));
+	if (iRValue < 111)
+	{
+		//перебрать список таргетов
+		if (pl2comm->iCounter1 >= 0)
+		{
+			PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[pl2comm->iCounter1], 0);
+			if (pl2comm->iCounter1>iMaxKeysValue)pl2comm->iCounter1 = 0;
+			else pl2comm->iCounter1++;
+		}
 
+		
+	}
+	ReleaseDC( pl2info->hwnd,hdcpix);
+	
 }
+void Baff(int startindex, ...)
+{
+	va_list marker;
+	va_start(marker, startindex);
+	L2INFO *pl2info = va_arg(marker, L2INFO*);
+	L2COMM* pl2comm = va_arg(marker, L2COMM*);
+	va_end(marker);
+	for (int i = 0; i < pl2comm->vbKeys.size(); i++)
+	{
+		PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[i], 0);
+	}
+}
+void HealParty(int startindex, ...)
+{
+	va_list marker;
+	va_start(marker, startindex);
+	L2INFO *pl2info = va_arg(marker, L2INFO*);
+	L2COMM* pl2comm = va_arg(marker, L2COMM*);
+	va_end(marker);
+	/*Список координат с хп мемберов пати*/
+	for (int i = 0; i < pl2comm->vbKeys.size(); i++)
+	{
+		PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[i], 0);
+	}
+}
+
 BOOL CALLBACK LookChildWindow(HWND hwnd, LPARAM lparam)
 {
 	WCHAR  pwcTextBuffer[256];
@@ -286,6 +332,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	RECT tectWind;
 	switch (message)
 	{
+	case WM_TIMER:
+		InvalidateRect(hWnd, NULL, TRUE);
+		UpdateWindow(hWnd);
+		break;
 	case WM_CREATE:
 		//CreateWindowEx("button", _T("Список процессов"), WS_CHILD | BS_PUSHBUTTON | WS_VISIBLE, 100, 100, 100, 20, hWnd, (HMENU)IDB_LISTL2PORC, NULL, NULL);
 		CreateWindowExW(0,_T("button"), _T("Список процессов"), WS_CHILD | BS_PUSHBUTTON | WS_VISIBLE, 0, 0, 200, 20, hWnd, (HMENU)IDB_LISTL2PORC, NULL, NULL);
@@ -294,6 +344,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		CreateWindowExW(0, _T("edit"), _T("Лог"), WS_CHILD | WS_VSCROLL | WS_VISIBLE | ES_AUTOVSCROLL | WS_BORDER, 403, 0, 500, 400, hWnd, (HMENU)IDTB_LOGTEXTBOX, NULL, NULL);
 		CreateWindowExW(0, _T("static"), _T("label"), WS_CHILD |  WS_VISIBLE | WS_TABSTOP | WS_BORDER, 907, 0, 100, 100, hWnd, (HMENU)IDL_MOUSECOORDINFO, NULL, NULL);
 		GetClientRect(hWnd, &rectMyClient);
+		SetTimer(hWnd, IDT_TIMERWMPRINT, (int)1000 , NULL);
 		//------------------------------
 		hResListBox = GetDlgItem(hWnd, IDLB_LISTBOCPROC);
 		hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
@@ -328,36 +379,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для нач
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
-			
-			tempcom.dwTimer = 120000;
-			tempcom.pCommand = CommPress;
+			//--------------------------------------------------------//
+			tempcom.dwTimer = 4000;
+			tempcom.pCommand = NotTarget;
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 1;
+			tempcom.iCounter1 = 0;
 			strTemp1 = _T("\nParametr");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
-			tempcom.dwKeyPressed = VK_F1;
-			tempcom.vbKeys.push_back(VK_F1);
+			tempcom.dwKeyPressed = 0x31;//key 1
+			tempcom.vbKeys.push_back(0x31);
 			tempcomm[0].push_back(tempcom);
-			tempcom.dwTimer = 3000;
-			tempcom.pCommand = CommPress;
+			//--------------------------------------------------------//
+			tempcom.dwTimer = 4000;
+			tempcom.pCommand = IsTarget;
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 2;
 			strTemp1 = _T("\nparam2");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*6);
-			tempcom.dwKeyPressed = VK_F2;
-			tempcom.vbKeys.push_back(VK_OEM_5);
-			tempcomm[0].push_back(tempcom);
+			tempcom.dwKeyPressed = VK_F1;
+			tempcom.iCounter1 = 0;
+			tempcom.vbKeys.push_back(VK_F1);
+			//tempcomm[0].push_back(tempcom);
+			//--------------------------------------------------------//
 			l2info[0].lComm = &tempcomm[0];
-			GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
-			SendTextToEdit(hLogTextBox,szBuffer);
+			//GetWindowText(l2info[0].hwnd, szBuffer, sizeof(szBuffer));
+			//SendTextToEdit(hLogTextBox,szBuffer);
 			//проверка функций
-			NotTarget(0, &l2info[0], &l2info[0].lComm[0]);
+			//NotTarget(0, &l2info[0], &l2info[0].lComm[0]);
 			//CreateThread(NULL,0,&StartMacros,0,0,NULL);
-			//_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
+			_beginthreadex(NULL,0,(unsigned int(_stdcall*)(void*))StartMacros,&l2info[0],0,0);
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
-			SendMessage(hWnd, WM_PAINT, 0, 0);
+			
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -380,17 +435,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
 		hdcmain = GetWindowDC(l2info[0].hwnd);
-		hdcPaintArea = CreateCompatibleDC(hdcmain);
+		//hdcPaintArea = CreateCompatibleDC(hdc);
 		//GetClientRect(l2info[0].hwnd, &tectWind);
-		hBitmap = CreateCompatibleBitmap(hdcPaintArea, GetDeviceCaps(hdcmain,HORZRES),GetDeviceCaps(hdcmain,VERTRES));
-		SelectObject(hdcPaintArea, hBitmap);
-		PrintWindow(l2info[0].hwnd, hdcPaintArea, PW_CLIENTONLY);
+		//hBitmap = CreateCompatibleBitmap(hdcPaintArea, GetDeviceCaps(hdcmain,HORZRES),GetDeviceCaps(hdcmain,VERTRES));
+		//SelectObject(hdcPaintArea, hBitmap);
+		//PrintWindow(l2info[0].hwnd, hdc, PW_CLIENTONLY);
 		//StretchBlt(hdcPaintArea, 0, 0, 175, 50, hdcmain, 0, 0, 175, 50, SRCCOPY);
-		//StretchBlt(hdc, rectMyClient.left + 10, rectMyClient.bottom - 10 - 50, 175, 50, hdcPaintArea, 100, 100, 275, 150, SRCCOPY);
-		BitBlt(hdc, 100, 100 , rectMyClient.right,rectMyClient.bottom, hdcPaintArea, 0, 0, SRCCOPY);
+		//GetPixel(hdcmain, 620, 55);
+		//GetRValue(GetPixel(hdcmain, 626, 58));
+		_itow((int)GetRValue(GetPixel(hdcmain, 626, 58)),(wchar_t*)szBuffer, 10);
+		SendTextToEdit(hLogTextBox, szBuffer);
+		StretchBlt(hdc, rectMyClient.left + 10, rectMyClient.bottom - 10 - 50, 175, 50, hdcmain, 626, 56, 175, 50, SRCCOPY);
+		//BitBlt(hdc, 10, 450 , rectMyClient.right,rectMyClient.bottom, hdcmain, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
-		DeleteObject(hBitmap);
-		DeleteDC(hdcPaintArea);
+		//DeleteObject(hBitmap);
+		//DeleteDC(hdcPaintArea);
 		ReleaseDC(l2info[0].hwnd, hdcmain);
 		break;
 	case WM_DESTROY:

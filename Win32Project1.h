@@ -11,6 +11,7 @@ HDC hdcMyProg;
 RECT rectMyClient;
 RECT rectTargetBox;
 BOOL CALLBACK LookChildWindow(HWND, LPARAM);
+
 PAINTSTRUCT ps;
 
 
