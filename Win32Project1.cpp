@@ -113,7 +113,7 @@ void IsTarget(int startindex, ...)
 	ReleaseDC(pl2info->hwnd, hdcpix);
 	if (iRValue > 111)
 	{
-		//перебрать список таргетов
+		
 		if (pl2comm->iCounter1 >= 0)
 		{
 			PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[0], 0);
@@ -375,7 +375,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Разобрать выбор в меню:
 		switch (wmId)
 		{
-		case IDB_SETSCRIPT:
+		case IDB_SETSCRIPT:	
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для нач
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
@@ -385,7 +385,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			tempcom.szCommType = 1;
 			tempcom.uiCommId = 1;
 			tempcom.iCounter1 = 0;
-			strTemp1 = _T("\nParametr");
+			strTemp1 = _T("\n\rКоманда NotTarget\r\n123");
 			memcpy(tempcom.wcParam,strTemp1,sizeof(strTemp1)*8);
 			tempcom.dwKeyPressed = 0x31;//key 1
 			tempcom.vbKeys.push_back(0x31);
