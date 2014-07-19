@@ -154,7 +154,7 @@ void Baff(int startindex, ...)
 	L2INFO *pl2info = va_arg(marker, L2INFO*);
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
-	for (int i = 0; i < pl2comm->vbKeys.size(); i++)
+	for (BYTE i = 0; i < pl2comm->vbKeys.size(); i++)
 	{
 		PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[i], 0);
 	}
@@ -167,10 +167,30 @@ void HealParty(int startindex, ...)
 	L2COMM* pl2comm = va_arg(marker, L2COMM*);
 	va_end(marker);
 	/*Список координат с хп мемберов пати*/
-	for (int i = 0; i < pl2comm->vbKeys.size(); i++)
+	for (BYTE i = 0; i < pl2comm->vbKeys.size(); i++)
 	{
 		PostMessage(pl2info->hwnd, WM_KEYDOWN, pl2comm->vbKeys[i], 0);
 	}
+}
+
+void ReloadL2Proc()
+{
+		SendMessage(hResListBox, LB_RESETCONTENT, 0, 0);
+		hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		peEntry.dwSize = sizeof(PROCESSENTRY32);
+		Process32First(hSnapShot, &peEntry);
+		do
+		{
+			if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
+			{
+				l2info[iCounter1].pid = peEntry.th32ProcessID;
+				memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
+				SendMessage(hResListBox, LB_ADDSTRING, 0, (LPARAM)(l2info[iCounter1].szWindName));
+				iCounter1++;
+			}
+		} while (Process32Next(hSnapShot, &peEntry));
+		//
+		l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
 }
 
 BOOL CALLBACK LookChildWindow(HWND hwnd, LPARAM lparam)
@@ -318,11 +338,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	
 	HDC hdc;
-	HANDLE hSnapShot;
-	PROCESSENTRY32 peEntry;
+	
 	TCHAR tchBuffer[1024];
-	HWND hResListBox=NULL;
-	int iCounter1 = 0;
+	
 	WCHAR szBuffer[1024];	
 	TCHAR *strTemp1;
 	UINT bitmap_dx = 175;
@@ -332,6 +350,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	RECT tectWind;
 	switch (message)
 	{
+	case WM_CONTEXTMENU:
+		if((HWND)wParam == hResListBox)
+		{
+			hContextMenuForListProc = CreatePopupMenu();
+			InsertMenu(hContextMenuForListProc,0,MF_BYCOMMAND | MF_STRING | MF_ENABLED, 1, L"Hello");
+			TrackPopupMenu(hContextMenuForListProc, TPM_TOPALIGN | TPM_LEFTALIGN, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), 0, hWnd, NULL);
+		}
+		break;
 	case WM_TIMER:
 		InvalidateRect(hWnd, NULL, TRUE);
 		UpdateWindow(hWnd);
@@ -350,24 +376,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 		hLabelInfo = GetDlgItem(hWnd, IDL_MOUSECOORDINFO);
 		//SetWindowTextW(hLabelInfo,_T("LABEL"));
-		SendMessage(hResListBox, LB_RESETCONTENT, 0, 0);
-		hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		peEntry.dwSize = sizeof(PROCESSENTRY32);
-		Process32First(hSnapShot, &peEntry);
-
-		do
-		{
-
-			if (!wcscmp(_T("l2.exe"), peEntry.szExeFile))
-			{
-				l2info[iCounter1].pid = peEntry.th32ProcessID;
-				memcpy(l2info[iCounter1].szWindName, peEntry.szExeFile, sizeof(peEntry.szExeFile));
-				SendMessage(hResListBox, LB_ADDSTRING, 0, (LPARAM)(l2info[iCounter1].szWindName));
-				iCounter1++;
-			}
-		} while (Process32Next(hSnapShot, &peEntry));
-		//
-		l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
+		ReloadL2Proc();
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
@@ -376,6 +385,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case IDB_SETSCRIPT:	
+
 			hLogTextBox = GetDlgItem(hWnd, IDTB_LOGTEXTBOX);
 			//для нач
 			l2info[0].hwnd = GetProcessWindow(l2info[0].pid);
@@ -412,7 +422,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDB_LISTL2PORC:
 			//Получеам список процессов
-			
+			ReloadL2Proc();
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);

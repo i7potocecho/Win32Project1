@@ -11,6 +11,12 @@ HDC hdcMyProg;
 RECT rectMyClient;
 RECT rectTargetBox;
 BOOL CALLBACK LookChildWindow(HWND, LPARAM);
+HWND GetProcessWindow(IN DWORD dwProcessId);
+HMENU hContextMenuForListProc=NULL;
+HWND hResListBox=NULL;
+int iCounter1 = 0;
+HANDLE hSnapShot;
+PROCESSENTRY32 peEntry;
 
 PAINTSTRUCT ps;
 
